@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>YGO Combo Maker</title>
+    <meta name="description" content="ノーテキストで遊戯王マスターデュエルの展開ルートを作成">
+    <!-- FontAwesome for icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div id="app">
+        <header>
+            <h1><i class="fa-solid fa-layer-group"></i> YGO Combo Maker</h1>
+            <div class="header-actions">
+                <button id="clear-btn" class="btn danger"><i class="fa-solid fa-trash"></i> 盤面クリア</button>
+                <button id="save-btn" class="btn primary"><i class="fa-solid fa-camera"></i> 保存（画像化予定）</button>
+            </div>
+        </header>
+        
+        <main>
+            <!-- Canvas Area (Top on mobile, left on desktop) -->
+            <section id="canvas-area">
+                <div style="margin-bottom: 20px;">
+                    <input type="text" id="combo-title" placeholder="展開ルートのタイトルを入力 (例: エクセル1枚初動)...">
+                </div>
+
+                <div id="combo-canvas" class="combo-canvas">
+                    <div class="empty-state">
+                        <i class="fa-solid fa-arrow-pointer" style="font-size: 2rem; margin-bottom: 10px;"></i>
+                        <p>パレットからカードを選択して<br>展開ルートを構築してください</p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Palette Area -->
+            <section id="palette-area">
+                <div class="tabs">
+                    <button class="tab-btn active" data-tab="deck"><i class="fa-solid fa-box"></i> デッキ</button>
+                    <button class="tab-btn" data-tab="cards"><i class="fa-solid fa-magnifying-glass"></i> 追加検索</button>
+                    <button class="tab-btn" data-tab="actions"><i class="fa-solid fa-bolt"></i> アクション</button>
+                </div>
+                
+                <!-- Deck Tab -->
+                <div class="tab-content active" id="tab-deck">
+                    <div class="tab-header">
+                        <div style="margin-bottom: 12px; display: flex; gap: 5px; align-items:center;">
+                            <select id="deck-selector" title="デッキ切り替え" style="flex: 1; padding: 8px; background: var(--bg-main); color: white; border: 1px solid var(--border-color); border-radius: 4px; outline: none;"></select>
+                            <button id="import-deck-btn" class="btn primary" title="テキストインポート"><i class="fa-solid fa-file-import"></i></button>
+                            <button id="new-deck-btn" class="btn" title="新規デッキ作成"><i class="fa-solid fa-plus"></i></button>
+                            <button id="rename-deck-btn" class="btn" title="デッキ名変更"><i class="fa-solid fa-pen"></i></button>
+                            <button id="delete-deck-btn" class="btn danger" title="デッキ削除"><i class="fa-solid fa-trash"></i></button>
+                        </div>
+                        <div style="display:flex; gap:8px; width:100%;">
+                            <button id="custom-card-btn" class="btn" style="flex:1; justify-content:center; padding:8px 5px; font-size:0.85rem;">
+                                <i class="fa-solid fa-pen-nib"></i> 名前で即席カード
+                            </button>
+                            <button id="image-crop-btn" class="btn primary" style="flex:1; justify-content:center; background:#2c3e50; padding:8px 5px; font-size:0.85rem;">
+                                <i class="fa-solid fa-crop-simple"></i> 画像から切り抜き
+                            </button>
+                        </div>
+                    </div>
+                    <div class="scroll-area">
+                        <div id="deck-results" class="card-grid"></div>
+                    </div>
+                </div>
+
+                <!-- Cards Search Tab -->
+                <div class="tab-content" id="tab-cards">
+                    <div class="tab-header">
+                        <div class="search-box">
+                            <input type="text" id="card-search" placeholder="カード名を入力 (ひらがな対応)...">
+                            <button id="search-btn"><i class="fa-solid fa-search"></i></button>
+                        </div>
+                        <p style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 5px;">
+                            ※クリックするとデッキに送信されます。（複数単語のスペース区切り検索も可能です）
+                        </p>
+                    </div>
+                    <div class="scroll-area">
+                        <div id="search-results" class="card-grid"></div>
+                    </div>
+                </div>
+                
+                <!-- Actions Tab -->
+                <div class="tab-content" id="tab-actions">
+                    <div class="scroll-area">
+                        <div class="action-grid">
+                            <button class="action-btn" data-type="eff1">① 効果①</button>
+                            <button class="action-btn" data-type="eff2">② 効果②</button>
+                            <button class="action-btn" data-type="eff3">③ 効果③</button>
+                            <button class="action-btn" data-type="effect"><i class="fa-solid fa-wand-magic-sparkles"></i> 効果発動</button>
+
+                            <button class="action-btn" data-type="ns"><i class="fa-solid fa-user"></i> 通常召喚</button>
+                            <button class="action-btn" data-type="ss"><i class="fa-solid fa-rotate"></i> 特殊召喚</button>
+                            
+                            <button class="action-btn" data-type="link"><i class="fa-solid fa-link"></i> リンク召喚</button>
+                            <button class="action-btn" data-type="xyz"><i class="fa-solid fa-crosshairs"></i> X召喚</button>
+                            <button class="action-btn" data-type="synchro"><i class="fa-solid fa-bolt"></i> S召喚</button>
+                            <button class="action-btn" data-type="fusion"><i class="fa-solid fa-hurricane"></i> 融合召喚</button>
+
+                            <button class="action-btn" data-type="search"><i class="fa-solid fa-magnifying-glass"></i> サーチ</button>
+                            <button class="action-btn" data-type="discard"><i class="fa-solid fa-trash-arrow-up"></i> 手札から捨てる</button>
+                            <button class="action-btn" data-type="gy"><i class="fa-solid fa-skull"></i> 墓地へ送る</button>
+                            <button class="action-btn" data-type="banish"><i class="fa-solid fa-ban"></i> 除外する</button>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+    
+    <!-- Image Crop Modal -->
+    <div id="image-crop-modal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.8); z-index:2000; align-items:center; justify-content:center; backdrop-filter: blur(3px);">
+        <div style="background:var(--bg-panel); padding:24px; border-radius:12px; width:95%; max-width:800px; box-shadow: 0 10px 25px rgba(0,0,0,0.5); display: flex; flex-direction: column; max-height: 90vh;">
+            <h3 style="color:var(--accent-gold); margin-bottom:10px;"><i class="fa-solid fa-crop"></i> 画像からカードを切り抜く</h3>
+            <p style="font-size:0.85rem; color:var(--text-main); margin-bottom:15px; line-height:1.5;">
+                スクショ等の画像を貼り付けてください（<strong>Ctrl+V</strong>）。<br>
+                「自動一括カット」を使えば、マスターデュエルのデッキ画像をなぞるだけで40枚のカードが一瞬で生成されます！
+            </p>
+            <div style="display:flex; justify-content:space-between; align-items:center; background: rgba(255,255,255,0.05); padding: 10px; border-radius: 8px; margin-bottom: 10px; flex-wrap:wrap; gap:10px;">
+                <div style="display:flex; gap: 15px; align-items:center;">
+                    <label style="cursor: pointer; display:flex; align-items:center; gap:5px;"><input type="radio" name="crop-mode" value="single" checked> <span>1枚だけ切り抜く</span></label>
+                    <label style="cursor: pointer; display:flex; align-items:center; gap:5px; color:var(--accent-gold); font-weight:bold;"><input type="radio" name="crop-mode" value="grid"> <i class="fa-solid fa-wand-magic-sparkles"></i> <span>自動一括カット(デッキ用)</span></label>
+                </div>
+                <div id="grid-controls" style="display:none; gap: 10px; align-items:center;">
+                    列(ヨコ): <input type="number" id="grid-cols" value="10" min="1" max="20" style="width: 50px; padding: 4px; border-radius: 4px; background: var(--bg-main); color: white; border: 1px solid var(--text-muted); outline:none;">
+                    行(タテ): <input type="number" id="grid-rows" value="4" min="1" max="10" style="width: 50px; padding: 4px; border-radius: 4px; background: var(--bg-main); color: white; border: 1px solid var(--text-muted); outline:none;">
+                </div>
+            </div>
+            <div style="display:flex; gap: 10px; margin-bottom: 10px;">
+                <input type="file" id="image-upload" accept="image/*" style="display:none;">
+                <button class="btn" onclick="document.getElementById('image-upload').click()"><i class="fa-solid fa-folder-open"></i> 画像を選ぶ</button>
+            </div>
+            
+            <div style="position: relative; width: 100%; flex: 1; min-height: 300px; background: #000; overflow: hidden; border: 1px solid var(--border-color); display:flex; justify-content:center; align-items:center;" id="crop-container">
+                <canvas id="crop-canvas" style="cursor: crosshair; max-width: 100%; max-height: 100%; display: block;"></canvas>
+                <div id="crop-box" style="display:none; position: absolute; border: 2px solid var(--accent-gold); background: rgba(241, 196, 15, 0.2); pointer-events: none; box-shadow: 0 0 0 9999px rgba(0,0,0,0.6);"></div>
+            </div>
+            
+            <div style="display:flex; justify-content: flex-end; gap: 10px; margin-top: 15px; align-items:center;">
+                <div id="crop-preview-container" style="display:none; align-items:center; gap: 10px; margin-right: auto;">
+                    <img id="crop-preview" style="height: 50px; border-radius: 4px; border: 1px solid var(--border-color);">
+                    <input type="text" id="crop-card-name" placeholder="カード名(任意)..." style="padding:8px; border-radius:4px; border:1px solid var(--border-color); background:var(--bg-main); color:white; outline:none;">
+                </div>
+                <button id="crop-cancel-btn" class="btn">キャンセル</button>
+                <button id="crop-add-btn" class="btn primary" disabled><i class="fa-solid fa-plus"></i> デッキに追加</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Import Modal -->
+    <div id="import-modal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.8); z-index:2000; align-items:center; justify-content:center; backdrop-filter: blur(3px);">
+        <div style="background:var(--bg-panel); padding:24px; border-radius:12px; width:90%; max-width:500px; box-shadow: 0 10px 25px rgba(0,0,0,0.5);">
+            <h3 style="color:var(--accent-gold); margin-bottom:10px;"><i class="fa-solid fa-file-import"></i> デッキテキストのインポート</h3>
+            <p style="font-size:0.85rem; color:var(--text-main); margin-bottom:15px; line-height:1.5;">
+                遊戯王のデッキレシピ（テキスト形式）をそのまま貼り付けてください。<br>
+                <span style="color:var(--text-muted);">例: 「3 灰流うらら」「x2 増殖するG」など、枚数表記は自動で無視してカード名だけを抽出します。APIにない新カードは自動的に即席カードとして組み込まれます！</span>
+            </p>
+            <textarea id="import-textarea" rows="10" placeholder="ここにテキストをペースト..." style="width:100%; background:var(--bg-main); color:white; border:1px solid var(--border-color); padding:12px; border-radius:8px; outline:none; resize:vertical; font-family:inherit; margin-bottom: 15px;"></textarea>
+            <div style="display:flex; gap:10px; justify-content:flex-end;">
+                <button id="import-cancel-btn" class="btn">キャンセル</button>
+                <button id="import-run-btn" class="btn primary">インポート実行</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Notifications -->
+    <div id="toast-container"></div>
+
+    <script src="app.js"></script>
+</body>
+</html>
